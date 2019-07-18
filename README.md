@@ -118,6 +118,13 @@ main() async {
 
 ```
 
+## Test
+
+Run tests with:
+```
+pub run test
+```
+
 ## References
 
 - http://bittorrent.org/beps/bep_0000.html
