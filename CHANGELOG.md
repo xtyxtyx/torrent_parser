@@ -1,3 +1,7 @@
+## 0.1.4
+
+- Add executable
+
 ## 0.1.3
 
 - More documentation

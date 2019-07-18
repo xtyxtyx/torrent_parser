@@ -1,5 +1,55 @@
 Utility to parse .torrent files.
 
+## Standalone executable
+
+Installation
+```sh
+# install with pub
+pub global activate torrent_parser
+```
+
+Usage
+```json
+tp ./test/multi.torrent
+
+{
+  "encoding": "UTF-8",
+  "announce": "http://tr.bangumi.moe:6969/announce",
+  "info": {
+    "length": null,
+    "name": "[Sakurato.sub] [New Game!] [13_OVA] [GB] [720P]",
+    "files": [
+      {
+        "length": 132320705,
+        "path": [
+          "[Sakurato.sub] [New Game!] [13_OVA] [GB] [720P].mp4"
+        ]
+      },
+      ...
+    ],
+    "piece length": 131072,
+    "pieces": [
+      "a5641ed0f4be619742fd56bc3fe3f4454c5ebed6",
+      "37a1f42bf736ea12eb76b0ccb53bf505d3babb15",
+      "cba2ca15ed8b110c57f52f0d58767abf73eca3a4",
+      "cbfcb848de4ab11db8f375516371c24c2a739320",
+      ...
+    ]
+  },
+  "announce-list": [
+    [
+      "http://tr.bangumi.moe:6969/announce"
+    ],
+    [
+      "http://t.nyaatracker.com/announce"
+    ],
+    ...
+  ],
+  "created by": "rin-pr/0.5.1",
+  "creation date": 1494251524
+}
+```
+
 ## Usage
 
 An example:
