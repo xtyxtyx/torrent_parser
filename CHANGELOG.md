@@ -1,3 +1,7 @@
+## 0.1.3
+
+- More documentation
+
 ## 0.1.2
 
 - Minor bug fixes

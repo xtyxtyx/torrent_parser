@@ -1,7 +1,7 @@
 name: torrent_parser
 description: >
   This library contains various utility to validate and parse .torrent files. 
-version: 0.1.2
+version: 0.1.3
 author: xuty <xty50337@hotmail.com>
 homepage: https://github.com/xtyxtyx/torrent_parser
 
