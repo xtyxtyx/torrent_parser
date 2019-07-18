@@ -6,31 +6,27 @@ import 'package:json_annotation/json_annotation.dart';
 
 import 'data_reader.dart';
 
-
 part 'torrent_parser_base.g.dart';
 
-
 /// TorrentParser is the workhorse of this library.
-/// 
+///
 /// Give it a piece of data and then call the `parse` method,
 /// it will produce an object representing the torrent.
 class TorrentParser {
-
   DataReader _reader;
 
   /// dataLength is the length of the torrent file in bytes.
   get dataLength => _reader.dataLength;
 
   /// Creates a TorrentParser from binary data
-  TorrentParser(List<int> data) 
-  : _reader = DataReader(data);
+  TorrentParser(List<int> data) : _reader = DataReader(data);
 
   /// Creates a TorrentParser from string. Mainly used for test purpose.
-  TorrentParser.fromString(String data) 
-  : _reader = DataReader(data.runes.toList());
+  TorrentParser.fromString(String data)
+      : _reader = DataReader(data.runes.toList());
 
   /// Creates a TorrentParser by reading .torrent file specified by `path`
-  /// 
+  ///
   /// Note that this static method returns a Future and therefore needs `await`.
   static Future<TorrentParser> fromFile(String path) async {
     final data = await File(path).readAsBytes();
@@ -38,7 +34,7 @@ class TorrentParser {
   }
 
   /// Parse the torrent file data and returns the result.
-  /// 
+  ///
   /// This method throws an exception in case the parsing process failed.
   TorrentData parse() {
     _reader.reset();
@@ -57,7 +53,7 @@ class TorrentParser {
     }
   }
 
-  /// parseAny can parse any bencoding objects 
+  /// parseAny can parse any bencoding objects
   /// inclding strings, ints, lists and dictionaries
   /// whereas `parse` can merely parse a dictionary.
   dynamic parseAny() {
@@ -89,7 +85,7 @@ class TorrentParser {
     final len = _reader.readInt();
     _reader.expect(':');
     final str = _reader.takeString(len);
-    if(str == null) {
+    if (str == null) {
       throw 'broken string at ${_reader.pos}';
     }
     return str;
@@ -105,7 +101,7 @@ class TorrentParser {
     _reader.expect('e');
     return result;
   }
-  
+
   Map<String, dynamic> _readDict() {
     final result = <String, dynamic>{};
     _reader.expect('d');
@@ -124,29 +120,26 @@ class TorrentParser {
     _reader.expect('e');
     return result;
   }
-
 }
 
 @JsonSerializable()
 class FileInfo {
-  
   /// length is the length of this file in bytes.
   int length;
 
-  /// "A list of UTF-8 encoded strings corresponding 
-  /// to subdirectory names, the last of which is the 
+  /// "A list of UTF-8 encoded strings corresponding
+  /// to subdirectory names, the last of which is the
   /// actual file name (a zero length list is an error case)."
-  /// 
+  ///
   /// From: http://bittorrent.org/beps/bep_0003.html
   List<String> path;
 
   FileInfo();
 
-  factory FileInfo.fromJson(Map<String, dynamic> json)
-    => _$FileInfoFromJson(json);
+  factory FileInfo.fromJson(Map<String, dynamic> json) =>
+      _$FileInfoFromJson(json);
 
-  Map<String, dynamic> toJson() 
-    => _$FileInfoToJson(this);
+  Map<String, dynamic> toJson() => _$FileInfoToJson(this);
 }
 
 @JsonSerializable()
@@ -163,29 +156,27 @@ class TorrentInfo {
   /// only one file.
   List<FileInfo> files;
 
-  /// pieceLength maps to the number of bytes in each piece the 
-  /// file is split into. For the purposes of transfer, files 
-  /// are split into fixed-size pieces which are all the same length 
-  /// except for possibly the last one which may be truncated. piece 
-  /// length is almost always a power of two, most commonly 
+  /// pieceLength maps to the number of bytes in each piece the
+  /// file is split into. For the purposes of transfer, files
+  /// are split into fixed-size pieces which are all the same length
+  /// except for possibly the last one which may be truncated. piece
+  /// length is almost always a power of two, most commonly
   /// 2^18 = 256 K (BitTorrent prior to version 3.2 uses 2 20 = 1 M as default).
   @JsonKey(name: 'piece length')
   int pieceLength;
 
-  /// pieces maps to a string whose length is a multiple of 20. 
-  /// It is to be subdivided into strings of length 20, 
+  /// pieces maps to a string whose length is a multiple of 20.
+  /// It is to be subdivided into strings of length 20,
   /// each of which is the SHA1 hash of the piece at the corresponding index.
   @JsonKey(fromJson: splitPieces)
   List<String> pieces;
 
   TorrentInfo();
 
-  factory TorrentInfo.fromJson(Map<String, dynamic> json)
-    => _$TorrentInfoFromJson(json);
+  factory TorrentInfo.fromJson(Map<String, dynamic> json) =>
+      _$TorrentInfoFromJson(json);
 
-  Map<String, dynamic> toJson() 
-    => _$TorrentInfoToJson(this);
-  
+  Map<String, dynamic> toJson() => _$TorrentInfoToJson(this);
 
   static List<String> splitPieces(String raw) {
     const piece_len = 20;
@@ -196,12 +187,10 @@ class TorrentInfo {
     }
     return result;
   }
-
 }
 
 @JsonSerializable()
 class TorrentData {
-
   /// encoding of the torrent
   String encoding;
 
@@ -225,11 +214,10 @@ class TorrentData {
 
   TorrentData();
 
-  factory TorrentData.fromJson(Map<String, dynamic> json)
-    => _$TorrentDataFromJson(json);
+  factory TorrentData.fromJson(Map<String, dynamic> json) =>
+      _$TorrentDataFromJson(json);
 
-  Map<String, dynamic> toJson() 
-    => _$TorrentDataToJson(this);
+  Map<String, dynamic> toJson() => _$TorrentDataToJson(this);
 
   @override
   String toString() {

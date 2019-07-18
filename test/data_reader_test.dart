@@ -1,10 +1,8 @@
-
 import 'dart:convert';
 import 'package:torrent_parser/src/data_reader.dart';
 import 'package:test/test.dart';
 
 void main() {
-
   group('DataReader tests', () {
     DataReader reader;
 
@@ -45,7 +43,6 @@ void main() {
       expect(reader.readInt(), equals(-789));
       expect(reader.atEOF, equals(true));
     });
-    
 
     test('atEOf', () {
       expect(reader.atEOF, equals(false));
@@ -54,12 +51,13 @@ void main() {
     });
 
     test('expect', () {
-      expect(() => reader.expect('hola'), throwsA(equals('hola expected at 0')));
+      expect(
+          () => reader.expect('hola'), throwsA(equals('hola expected at 0')));
       expect(reader.expect('hello'), equals('hello'));
       expect(reader.expect(' '), equals(' '));
       expect(reader.expect('world'), equals('world'));
-      expect(() => reader.expect('sekai'), throwsA(equals('sekai expected at 11')));
+      expect(() => reader.expect('sekai'),
+          throwsA(equals('sekai expected at 11')));
     });
   });
-
 }

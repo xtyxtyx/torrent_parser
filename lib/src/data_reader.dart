@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 class DataReader {
-
   final List<int> _data;
   int _pos = 0;
 
@@ -10,12 +9,10 @@ class DataReader {
   get pos => _pos;
   bool get atEOF => peekString() == null;
 
-  DataReader(List<int> data)
-  : _data = data;
+  DataReader(List<int> data) : _data = data;
 
-  DataReader.fromString(String data)
-  : _data = data.runes.toList();
-  
+  DataReader.fromString(String data) : _data = data.runes.toList();
+
   String takeString([int len = 1]) {
     final codes = take(len);
     if (codes == null) return null;
@@ -38,9 +35,7 @@ class DataReader {
 
   String peekString([int len = 1]) {
     final codes = peek(len);
-    return codes != null
-      ? String.fromCharCodes(codes)
-      : null;
+    return codes != null ? String.fromCharCodes(codes) : null;
   }
 
   Iterable<int> peek([int len = 1]) {
@@ -95,7 +90,7 @@ class DataReader {
     }
     return flag * int.parse(digits.join(''));
   }
-  
+
   void reset() {
     _pos = 0;
   }
