@@ -18,4 +18,4 @@ main() async {
 
 Please file feature requests and bugs at the [Github issues][tracker].
 
-[tracker]: http://example.com/issues/replaceme
+[tracker]: https://github.com/xtyxtyx/torrent_parser

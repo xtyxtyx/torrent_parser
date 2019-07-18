@@ -2,6 +2,7 @@ name: torrent_parser
 description: Utility to parse .torrent files.
 version: 0.1.0
 author: xuty <xty50337@hotmail.com>
+homepage: https://github.com/xtyxtyx/torrent_parser
 
 environment:
   sdk: '>=2.2.0 <3.0.0'
