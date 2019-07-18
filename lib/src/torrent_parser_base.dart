@@ -1,131 +1,45 @@
 import 'dart:io';
 import 'dart:convert';
 
-import 'package:json_annotation/json_annotation.dart';
 import 'package:convert/convert.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+import 'data_reader.dart';
+
 
 part 'torrent_parser_base.g.dart';
 
-class DataReader {
 
-  final List<int> _data;
-  int _pos = 0;
-
-  get _stringData => String.fromCharCodes(_data, _pos);
-  get dataLength => _data.length;
-  get pos => _pos;
-  bool get atEOF => peekString() == null;
-
-  DataReader(List<int> data)
-  : _data = data;
-
-  DataReader.fromString(String data)
-  : _data = data.runes.toList();
-  
-  String takeString([int len = 1]) {
-    final codes = take(len);
-    if (codes == null) return null;
-    try {
-      return utf8.decode(codes);
-    } catch (_) {
-      return String.fromCharCodes(codes);
-    }
-  }
-
-  Iterable<int> take([int len = 1]) {
-    final result = peek(len);
-    if (result == null) {
-      return null;
-    }
-
-    _pos += len;
-    return result;
-  }
-
-  String peekString([int len = 1]) {
-    final codes = peek(len);
-    return codes != null
-      ? String.fromCharCodes(codes)
-      : null;
-  }
-
-  Iterable<int> peek([int len = 1]) {
-    if (_data.length < _pos + len) {
-      return null;
-    }
-
-    final result = _data.sublist(_pos, _pos + len);
-    return result;
-  }
-
-  String match(Pattern pattern) {
-    final result = pattern.matchAsPrefix(_stringData);
-    if (result == null) {
-      return null;
-    }
-    return result.group(0);
-  }
-
-  bool matches(Pattern pattern) {
-    final result = match(pattern);
-    return result != null;
-  }
-
-  String expect(Pattern pattern) {
-    final result = match(pattern);
-    if (result == null) {
-      throw '$pattern expected at $_pos';
-    }
-    _pos += result.length;
-    return result;
-  }
-
-  void expectEOF() {
-    if (!atEOF) {
-      throw 'EOF expected at $_pos';
-    }
-  }
-
-  int readInt() {
-    int flag = 1;
-    final digits = <String>[];
-    if (matches('-')) {
-      takeString();
-      flag = -1;
-    }
-    while (matches(RegExp(r'[0-9]'))) {
-      digits.add(takeString());
-    }
-    if (digits.isEmpty) {
-      throw '<digit> expected at ${pos}';
-    }
-    return flag * int.parse(digits.join(''));
-  }
-  
-  void reset() {
-    _pos = 0;
-  }
-}
-
-/// TorrentParser
+/// TorrentParser is the workhorse of this library.
+/// 
+/// Give it a piece of data and then call the `parse` method,
+/// it will produce an object representing the torrent.
 class TorrentParser {
 
   DataReader _reader;
 
+  /// dataLength is the length of the torrent file in bytes.
   get dataLength => _reader.dataLength;
 
-  
+  /// Creates a TorrentParser from binary data
   TorrentParser(List<int> data) 
   : _reader = DataReader(data);
 
+  /// Creates a TorrentParser from string. Mainly used for test purpose.
   TorrentParser.fromString(String data) 
   : _reader = DataReader(data.runes.toList());
 
+  /// Creates a TorrentParser by reading .torrent file specified by `path`
+  /// 
+  /// Note that this static method returns a Future and therefore needs `await`.
   static Future<TorrentParser> fromFile(String path) async {
     final data = await File(path).readAsBytes();
     return TorrentParser(data);
   }
 
+  /// Parse the torrent file data and returns the result.
+  /// 
+  /// This method throws an exception in case the parsing process failed.
   TorrentData parse() {
     _reader.reset();
     final dict = _readDict();
@@ -133,6 +47,8 @@ class TorrentParser {
     return TorrentData.fromJson(dict);
   }
 
+  /// tryParse is equivalent to `parse`
+  /// except that tryParse wiil return null when failed rather than throw an exception
   TorrentData tryParse() {
     try {
       return parse();
@@ -141,6 +57,9 @@ class TorrentParser {
     }
   }
 
+  /// parseAny can parse any bencoding objects 
+  /// inclding strings, ints, lists and dictionaries
+  /// whereas `parse` can merely parse a dictionary.
   dynamic parseAny() {
     _reader.reset();
     return _readNext();
@@ -211,7 +130,14 @@ class TorrentParser {
 @JsonSerializable()
 class FileInfo {
   
+  /// length is the length of this file in bytes.
   int length;
+
+  /// "A list of UTF-8 encoded strings corresponding 
+  /// to subdirectory names, the last of which is the 
+  /// actual file name (a zero length list is an error case)."
+  /// 
+  /// From: http://bittorrent.org/beps/bep_0003.html
   List<String> path;
 
   FileInfo();
@@ -225,14 +151,30 @@ class FileInfo {
 
 @JsonSerializable()
 class TorrentInfo {
-
+  /// The length of the file, absent if this torrent contains
+  /// multiple files.
   int length;
+
+  /// The name of the file, or the directory name when this torrent
+  /// contains multiple files.
   String name;
+
+  /// A list of FileInfo, absent if the torrent contains
+  /// only one file.
   List<FileInfo> files;
 
+  /// pieceLength maps to the number of bytes in each piece the 
+  /// file is split into. For the purposes of transfer, files 
+  /// are split into fixed-size pieces which are all the same length 
+  /// except for possibly the last one which may be truncated. piece 
+  /// length is almost always a power of two, most commonly 
+  /// 2^18 = 256 K (BitTorrent prior to version 3.2 uses 2 20 = 1 M as default).
   @JsonKey(name: 'piece length')
   int pieceLength;
 
+  /// pieces maps to a string whose length is a multiple of 20. 
+  /// It is to be subdivided into strings of length 20, 
+  /// each of which is the SHA1 hash of the piece at the corresponding index.
   @JsonKey(fromJson: splitPieces)
   List<String> pieces;
 
@@ -260,16 +202,24 @@ class TorrentInfo {
 @JsonSerializable()
 class TorrentData {
 
+  /// encoding of the torrent
   String encoding;
+
+  /// announce is the URL of the tracker.
   String announce;
+
+  /// TorrentInfo
   TorrentInfo info;
 
+  /// a list of trackers.
   @JsonKey(name: 'announce-list')
   List<List<String>> announceList;
 
+  /// software that creates this torrent
   @JsonKey(name: 'created by')
   String createdBy;
 
+  /// timestamp when this torrent was created.
   @JsonKey(name: 'creation date')
   int creationDate;
 
