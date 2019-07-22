@@ -1,5 +1,7 @@
 Utility to parse .torrent files.
 
+To parse bencoded data consider using https://pub.dev/packages/torrent_bencode
+
 ## Standalone executable
 
 Installation
