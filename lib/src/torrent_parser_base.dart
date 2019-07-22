@@ -1,31 +1,27 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:convert/convert.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:torrent_bencode/torrent_bencode.dart';
 
-import 'data_reader.dart';
-
-part 'torrent_parser_base.g.dart';
+import 'utils.dart';
 
 /// TorrentParser is the workhorse of this library.
 ///
 /// Give it a piece of data and then call the `parse` method,
 /// it will produce an object representing the torrent.
 class TorrentParser {
-  DataReader _reader;
+  List<int> _data;
 
-  /// dataLength is the length of the torrent file in bytes.
-  get dataLength => _reader.dataLength;
-
-  /// Creates a TorrentParser from binary data
-  TorrentParser(List<int> data) : _reader = DataReader(data);
+  /// Creates a TorrentParser from bencoded bytes.
+  TorrentParser(this._data);
 
   /// Creates a TorrentParser from string. Mainly used for test purpose.
-  TorrentParser.fromString(String data)
-      : _reader = DataReader(data.runes.toList());
+  TorrentParser.fromString(String str) : _data = str.runes.toList();
 
-  /// Creates a TorrentParser by reading .torrent file specified by `path`
+  /// Creates a TorrentParser from .torrent file specified by `path`
   ///
   /// Note that this static method returns a Future and therefore needs `await`.
   static Future<TorrentParser> fromFile(String path) async {
@@ -37,10 +33,9 @@ class TorrentParser {
   ///
   /// This method throws an exception in case the parsing process failed.
   TorrentData parse() {
-    _reader.reset();
-    final dict = _readDict();
-    _reader.expectEOF();
-    return TorrentData.fromJson(dict);
+    final dict = bDecoder.convert(_data);
+    assert(dict is Map);
+    return TorrentData.fromRawData(dict);
   }
 
   /// tryParse is equivalent to `parse`
@@ -57,68 +52,7 @@ class TorrentParser {
   /// inclding strings, ints, lists and dictionaries
   /// whereas `parse` can merely parse a dictionary.
   dynamic parseAny() {
-    _reader.reset();
-    return _readNext();
-  }
-
-  dynamic _readNext() {
-    if (_reader.matches('d')) {
-      return _readDict();
-    }
-    if (_reader.matches('i')) {
-      return _readInt();
-    }
-    if (_reader.matches('l')) {
-      return _readList();
-    }
-    if (_reader.matches(RegExp(r'[0-9]'))) {
-      return _readString();
-    }
-    if (_reader.atEOF) {
-      return null;
-    }
-
-    throw 'd, i, l or <number> expected at ${_reader.pos}';
-  }
-
-  String _readString() {
-    final len = _reader.readInt();
-    _reader.expect(':');
-    final str = _reader.takeString(len);
-    if (str == null) {
-      throw 'broken string at ${_reader.pos}';
-    }
-    return str;
-  }
-
-  List<dynamic> _readList() {
-    final result = <dynamic>[];
-    _reader.expect('l');
-    while (!_reader.matches('e')) {
-      final value = _readNext();
-      result.add(value);
-    }
-    _reader.expect('e');
-    return result;
-  }
-
-  Map<String, dynamic> _readDict() {
-    final result = <String, dynamic>{};
-    _reader.expect('d');
-    while (!_reader.matches('e')) {
-      final key = _readString();
-      final value = _readNext();
-      result[key] = value;
-    }
-    _reader.expect('e');
-    return result;
-  }
-
-  int _readInt() {
-    _reader.expect('i');
-    final result = _reader.readInt();
-    _reader.expect('e');
-    return result;
+    return bDecoder.convert(_data);
   }
 }
 
@@ -127,19 +61,22 @@ class FileInfo {
   /// length is the length of this file in bytes.
   int length;
 
-  /// "A list of UTF-8 encoded strings corresponding
+  /// A list of UTF-8 encoded strings corresponding
   /// to subdirectory names, the last of which is the
-  /// actual file name (a zero length list is an error case)."
-  ///
-  /// From: http://bittorrent.org/beps/bep_0003.html
+  /// actual file name (a zero length list is an error case).
   List<String> path;
 
   FileInfo();
 
-  factory FileInfo.fromJson(Map<String, dynamic> json) =>
-      _$FileInfoFromJson(json);
+  FileInfo.fromRawData(Map<String, dynamic> data) {
+    length = data['length'];
+    path = data['path']?.map<String>((item) => utf8.decode(item))?.toList();
+  }
 
-  Map<String, dynamic> toJson() => _$FileInfoToJson(this);
+  Map<String, dynamic> toJson() => {
+    'length': length,
+    'path': path,
+  };
 }
 
 @JsonSerializable()
@@ -162,31 +99,32 @@ class TorrentInfo {
   /// except for possibly the last one which may be truncated. piece
   /// length is almost always a power of two, most commonly
   /// 2^18 = 256 K (BitTorrent prior to version 3.2 uses 2 20 = 1 M as default).
-  @JsonKey(name: 'piece length')
   int pieceLength;
 
   /// pieces maps to a string whose length is a multiple of 20.
   /// It is to be subdivided into strings of length 20,
   /// each of which is the SHA1 hash of the piece at the corresponding index.
-  @JsonKey(fromJson: splitPieces)
-  List<String> pieces;
+  List<List<int>> pieces;
 
   TorrentInfo();
 
-  factory TorrentInfo.fromJson(Map<String, dynamic> json) =>
-      _$TorrentInfoFromJson(json);
-
-  Map<String, dynamic> toJson() => _$TorrentInfoToJson(this);
-
-  static List<String> splitPieces(String raw) {
-    const piece_len = 20;
-    final result = <String>[];
-    for (var i = 0; i < raw.length; i += piece_len) {
-      final str = raw.substring(i, i + piece_len);
-      result.add(hex.encode(str.runes.toList()));
-    }
-    return result;
+  TorrentInfo.fromRawData(Map<String, dynamic> data) {
+    length = data['length'];
+    pieceLength = data['piece length'];
+    name = utf8.decode(data['name']);
+    pieces = splitList(data['pieces'], 20);
+    files = (data['files'] as List<dynamic>)
+        ?.map((file) => FileInfo.fromRawData(file))
+        ?.toList();
   }
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'length': length,
+        'piece length': pieceLength,
+        'pieces': pieces?.map(hex.encode)?.toList(),
+        'files': files,
+      };
 }
 
 @JsonSerializable()
@@ -200,24 +138,33 @@ class TorrentData {
   /// TorrentInfo
   TorrentInfo info;
 
-  /// a list of trackers.
-  @JsonKey(name: 'announce-list')
-  List<List<String>> announceList;
+  // /// a list of trackers.
+  // List<List<String>> announceList;
 
   /// software that creates this torrent
-  @JsonKey(name: 'created by')
   String createdBy;
 
   /// timestamp when this torrent was created.
-  @JsonKey(name: 'creation date')
   int creationDate;
 
   TorrentData();
 
-  factory TorrentData.fromJson(Map<String, dynamic> json) =>
-      _$TorrentDataFromJson(json);
+  TorrentData.fromRawData(Map<String, dynamic> data) {
+    creationDate = data['creation date'];
+    createdBy =
+        data['created by'] == null ? null : utf8.decode(data['created by']);
+    announce = data['announce'] == null ? null : utf8.decode(data['announce']);
+    encoding = data['encoding'] == null ? null : utf8.decode(data['encoding']);
+    info = data['info'] == null ? null : TorrentInfo.fromRawData(data['info']);
+  }
 
-  Map<String, dynamic> toJson() => _$TorrentDataToJson(this);
+  Map<String, dynamic> toJson() => {
+        'encoding': encoding,
+        'announce': announce,
+        'created by': createdBy,
+        'creation date': creationDate,
+        'info': info.toJson(),
+      };
 
   @override
   String toString() {

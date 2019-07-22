@@ -10,10 +10,6 @@ void main() {
       torrentParser = await TorrentParser.fromFile('test/multi.torrent');
     });
 
-    test('Get data length', () {
-      expect(torrentParser.dataLength, equals(22231));
-    });
-
     test('parse', () {
       expect(torrentParser.parse(), anything);
       // print(torrentParser.parse().raw['info'].keys);

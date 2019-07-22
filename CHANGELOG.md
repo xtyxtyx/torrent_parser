@@ -1,3 +1,7 @@
+## 1.0.0
+
+- use torrent_parser
+
 ## 0.1.4
 
 - Add executable
