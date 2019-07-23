@@ -1,3 +1,7 @@
+## 1.1.0
+
+- add infoHash field
+
 ## 1.0.0
 
 - use torrent_parser

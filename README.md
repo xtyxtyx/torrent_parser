@@ -1,4 +1,4 @@
-Utility to parse .torrent files.
+Utility to parse .torrent files. ![ci][ci]
 
 To parse bencoded data consider using https://pub.dev/packages/torrent_bencode
 
@@ -137,3 +137,4 @@ pub run test
 Please file feature requests and bugs at the [Github issues][tracker].
 
 [tracker]: https://github.com/xtyxtyx/torrent_parser
+[ci]: https://travis-ci.org/xtyxtyx/torrent_parser.svg?branch=master

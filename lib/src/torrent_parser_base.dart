@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
+import 'package:crypto/crypto.dart';
 
 import 'package:convert/convert.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -74,9 +74,9 @@ class FileInfo {
   }
 
   Map<String, dynamic> toJson() => {
-    'length': length,
-    'path': path,
-  };
+        'length': length,
+        'path': path,
+      };
 }
 
 @JsonSerializable()
@@ -147,6 +147,8 @@ class TorrentData {
   /// timestamp when this torrent was created.
   int creationDate;
 
+  List<int> infoHash;
+
   TorrentData();
 
   TorrentData.fromRawData(Map<String, dynamic> data) {
@@ -156,6 +158,9 @@ class TorrentData {
     announce = data['announce'] == null ? null : utf8.decode(data['announce']);
     encoding = data['encoding'] == null ? null : utf8.decode(data['encoding']);
     info = data['info'] == null ? null : TorrentInfo.fromRawData(data['info']);
+    infoHash = data['info'] == null
+        ? null
+        : sha1.convert(bEncoder.convert(data['info'])).bytes;
   }
 
   Map<String, dynamic> toJson() => {
