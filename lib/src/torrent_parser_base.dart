@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 
 import 'package:convert/convert.dart';
@@ -143,8 +144,8 @@ class TorrentData {
   /// TorrentInfo
   TorrentInfo info;
 
-  // /// a list of trackers.
-  // List<List<String>> announceList;
+  /// a list of trackers.
+  List<List<String>> announceList;
 
   /// software that creates this torrent
   String createdBy;
@@ -157,10 +158,16 @@ class TorrentData {
   TorrentData();
 
   TorrentData.fromRawData(Map<String, dynamic> data) {
+    print(data.keys);
     creationDate = data['creation date'];
     createdBy =
         data['created by'] == null ? null : utf8.decode(data['created by']);
     announce = data['announce'] == null ? null : utf8.decode(data['announce']);
+    announceList = data['announce-list'] == null
+        ? null
+        : List<List<String>>.from((data['announce-list'] as List)
+            .map((tier) => List<Uint8List>.from(tier).map(utf8.decode).toList())
+            .toList());
     encoding = data['encoding'] == null ? null : utf8.decode(data['encoding']);
     info = data['info'] == null ? null : TorrentInfo.fromRawData(data['info']);
     infoHash = data['info'] == null
@@ -173,6 +180,7 @@ class TorrentData {
         'announce': announce,
         'created by': createdBy,
         'creation date': creationDate,
+        'announce-list': announceList,
         'info': info.toJson(),
       };
 

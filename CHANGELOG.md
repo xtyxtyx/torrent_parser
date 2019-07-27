@@ -1,3 +1,7 @@
+## 1.2.0
+
+- add support for announce-list
+
 ## 1.1.1+1
 
 - update README
