@@ -125,6 +125,11 @@ class TorrentInfo {
         'files': files,
         'pieces': pieces?.map(hex.encode)?.toList(),
       };
+
+  int get totalLength {
+    if (length != null) return length;
+    return files.fold(0, (length, file) => length + file.length);
+  }
 }
 
 @JsonSerializable()

@@ -4,15 +4,24 @@ import 'package:test/test.dart';
 
 void main() {
   group('basic tests', () {
-    TorrentParser torrentParser;
+    TorrentParser singleFileTorrent;
+    TorrentParser multiFileTorrent;
 
     setUp(() async {
-      torrentParser = await TorrentParser.fromFile('test/single.torrent');
+      singleFileTorrent = await TorrentParser.fromFile('test/single.torrent');
+      multiFileTorrent = await TorrentParser.fromFile('test/multi.torrent');
     });
 
     test('parse', () {
-      expect(torrentParser.parse().infoHash,
+      var torrent = singleFileTorrent.parse();
+      expect(torrent.infoHash,
           equals(hex.decode('f5b31b1bd67bf65fe97be298ec7c473cb2e3e201')));
+      expect(torrent.info.totalLength, equals(1478492160));
+
+      torrent = multiFileTorrent.parse();
+      expect(torrent.infoHash,
+          equals(hex.decode('01f3144d118a8863ac14880802e96ec8a61ca82b')));
+      expect(torrent.info.totalLength, equals(133706137));
     });
 
     test('Parse int', () {
