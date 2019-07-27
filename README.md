@@ -17,9 +17,12 @@ tp ./test/multi.torrent
 {
   "encoding": "UTF-8",
   "announce": "http://tr.bangumi.moe:6969/announce",
+  "created by": "rin-pr/0.5.1",
+  "creation date": 1494251524,
   "info": {
-    "length": null,
     "name": "[Sakurato.sub] [New Game!] [13_OVA] [GB] [720P]",
+    "length": null,
+    "piece length": 131072,
     "files": [
       {
         "length": 132320705,
@@ -27,28 +30,25 @@ tp ./test/multi.torrent
           "[Sakurato.sub] [New Game!] [13_OVA] [GB] [720P].mp4"
         ]
       },
-      ...
+      {
+        "length": 1385432,
+        "path": [
+          "桜都字幕组招募中～.jpg"
+        ]
+      }
     ],
-    "piece length": 131072,
     "pieces": [
       "a5641ed0f4be619742fd56bc3fe3f4454c5ebed6",
       "37a1f42bf736ea12eb76b0ccb53bf505d3babb15",
+      "7b46a960cfd74c491a77a1335462f9311ff6d9ae",
+      "ef84bb9f06d96b9bf532134095b311c1ab3e7087",
+      "0be60c3fa15f8981186b4931ca6151ad4e39fd96",
       "cba2ca15ed8b110c57f52f0d58767abf73eca3a4",
       "cbfcb848de4ab11db8f375516371c24c2a739320",
+      "e22f05de6ec9b31e336bc409f591b8a9ee4fb725",
       ...
     ]
-  },
-  "announce-list": [
-    [
-      "http://tr.bangumi.moe:6969/announce"
-    ],
-    [
-      "http://t.nyaatracker.com/announce"
-    ],
-    ...
-  ],
-  "created by": "rin-pr/0.5.1",
-  "creation date": 1494251524
+  }
 }
 ```
 

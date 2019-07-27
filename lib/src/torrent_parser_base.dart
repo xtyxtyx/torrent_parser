@@ -122,8 +122,8 @@ class TorrentInfo {
         'name': name,
         'length': length,
         'piece length': pieceLength,
-        'pieces': pieces?.map(hex.encode)?.toList(),
         'files': files,
+        'pieces': pieces?.map(hex.encode)?.toList(),
       };
 }
 
