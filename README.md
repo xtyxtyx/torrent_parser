@@ -30,12 +30,7 @@ tp ./test/multi.torrent
           "[Sakurato.sub] [New Game!] [13_OVA] [GB] [720P].mp4"
         ]
       },
-      {
-        "length": 1385432,
-        "path": [
-          "桜都字幕组招募中～.jpg"
-        ]
-      }
+      ...
     ],
     "pieces": [
       "a5641ed0f4be619742fd56bc3fe3f4454c5ebed6",

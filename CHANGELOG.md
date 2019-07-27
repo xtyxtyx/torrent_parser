@@ -1,3 +1,8 @@
+## 1.1.1+1
+
+- update README
+
+
 ## 1.1.1
 
 - add torrent.info.totalLength field
